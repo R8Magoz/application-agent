@@ -2,38 +2,38 @@
 
 ## SOURCES IMPLEMENTED:
 
-- ReliefWeb: POST API v1 (auto v2) + HTML fallback — partial — v1 decommissioned; v2 needs approved appname; HTML scrape works
-- LinkedIn: guest API + search page fallback — working — guest endpoint returns job cards reliably
-- UN Jobs: RSS (Geneva + root feed) — partial — Cloudflare HTTP 403 from some networks
-- ILO Jobs: RSS + jobsearch web fallback — partial — RSS URL returns HTML not XML; static scrape usually empty (JS site)
-- DevNetJobs: RSS + homepage scrape — partial — RSS 404; homepage scrape returns ~96 job links
-- OECD Careers: BeautifulSoup `li.opening-job` — working — 11 openings found in testing
-- World Bank Jobs: scrape primary URL + CSOD/careers fallbacks — partial — jobs.worldbank.org DNS fails in some envs; CSOD is JS-rendered
-- UNDP Jobs: scrape cj_jobs.cfm + cj_view_jobs.cfm — working — cj_jobs.cfm 404; cj_view_jobs.cfm returns 98 Oracle links
-- EU Careers (EPSO): scrape open-competitions page — partial — few static competition links; RSS URL returns 404
-- Impactpool: scrape search page with Referer header — working — 40 job links when not 403
-- Devex Jobs: BeautifulSoup search page — partial — HTTP 403 bot protection common
-- Global Jobs: search page scrape + RSS fallback — working — RSS feed has 273 entries
-- Idealist: __NEXT_DATA__ JSON walk + link scrape — partial — mostly JS-rendered; often 0 results
-- Bond: scrape jobs.bond.org.uk — partial — DNS resolution fails in some environments
-- Oxfam Jobs: vacancy search + oxfam.org fallback — partial — jobs.oxfam.org DNS fails in some environments
-- GIZ Jobs: index_en_jobs.html + career/jobs fallback — partial — mostly navigation links, few listings
-- Fair Wear Foundation: vacancies page scrape — partial — few/no vacancy links in static HTML
-- IDH Sustainable Trade: jobs page scrape — partial — redirects to external HiBob careers portal
+- ReliefWeb: POST v2 API (`https://api.reliefweb.int/v2/jobs`) + HTML fallback — **partial** — v2 needs approved `RELIEFWEB_APPNAME`; HTML scrape works when API denied
+- LinkedIn: guest API + search fallback (2s delay, max 25 results) — **working** — rate-limit possible on heavy use
+- UN Jobs: RSS (Geneva + root feed) — **partial** — Cloudflare HTTP 403 from some networks
+- ILO Jobs: web scrape `job-search-results/?keyword=` — **partial** — page loads but listings are JavaScript-rendered; static scrape often returns 0
+- DevNetJobs: RSS + homepage scrape — **partial** — RSS 404; homepage scrape returns ~96 job links
+- OECD Careers: BeautifulSoup `li.opening-job` — **working**
+- World Bank Jobs: scrape + fallbacks — **partial** — shows ⚠️ manual URL warning when 0 jobs (cloud IP likely)
+- UNDP Jobs: scrape `cj_jobs.cfm` + `cj_view_jobs.cfm` — **working** — primary URL 404; view page returns Oracle links
+- EU Careers (EPSO): scrape open-competitions page — **partial** — few static links
+- Impactpool: scrape search page with Referer — **working** when not 403
+- Devex Jobs: BeautifulSoup search page — **partial** — HTTP 403 common
+- Global Jobs: search scrape + RSS fallback — **working** — RSS has 273 entries
+- Idealist: `__NEXT_DATA__` JSON + link scrape — **partial** — mostly JS-rendered
+- Bond: scrape `jobs.bond.org.uk` — **partial** — ⚠️ manual URL warning when 0 jobs; DNS may fail
+- Oxfam Jobs: vacancy search + fallback — **partial** — ⚠️ manual URL warning when 0 jobs; DNS may fail
+- GIZ Jobs: `index_en_jobs.html` + career/jobs fallback — **partial** — ⚠️ manual URL warning when 0 jobs
+- Fair Wear Foundation: vacancies page scrape — **partial** — ⚠️ manual URL warning when 0 jobs
+- IDH Sustainable Trade: jobs page scrape — **partial** — ⚠️ manual URL warning when 0 jobs; redirects to HiBob portal
 
 ## SOURCES SKIPPED:
 
-- None — all 18 sources from the spec are implemented with at least one fetch attempt and error logging
+- None — all 18 sources implemented
 
 ## KNOWN LIMITATIONS:
 
-- ReliefWeb API v1 is decommissioned (HTTP 410); v2 requires a pre-approved appname (set `RELIEFWEB_APPNAME`)
-- Several sites block datacenter IPs (UN Jobs 403, Devex 403, Impactpool intermittent 403)
-- ILO, World Bank CSOD, Idealist, and GIZ rely heavily on JavaScript rendering — static scrape may return 0
-- `jobs.worldbank.org`, `jobs.oxfam.org`, and `jobs.bond.org.uk` may fail DNS in sandbox/CI environments
-- LinkedIn may rate-limit (HTTP 429) with heavy use — guest endpoint used with standard User-Agent
-- Scoring requires `ANTHROPIC_API_KEY`; failed batches appear under "Not scored yet" with score=None
-- Location filter is keyword-based (substring match), not geocoded
+- ReliefWeb v2 requires pre-approved appname (`RELIEFWEB_APPNAME` env var)
+- ILO `job-search-results` page is JS-heavy — may return 0 jobs from cloud IPs even after scrape switch
+- World Bank, Bond, Oxfam, GIZ, Fair Wear, IDH show ⚠️ warnings (not ❌ failures) when 0 jobs, with manual URLs
+- UN Jobs, Devex, Impactpool may block datacenter IPs (403)
+- LinkedIn capped at 25 results with 2s sleep between guest API and fallback request
+- Location filter uses expanded aliases (Geneva↔Genève/Switzerland, Netherlands↔Amsterdam/NL, Remote↔home-based/virtual) but is not geocoded
+- Scoring requires `ANTHROPIC_API_KEY`; uses strict 0–10 rubric with colour badges
 
 ## PACKAGES REQUIRED:
 
@@ -41,8 +41,7 @@
 
 ## QUESTIONS FOR REVIEWER:
 
-- Should ReliefWeb HTML fallback be preferred over API given appname approval requirement?
-- Is DevNetJobs homepage scrape acceptable given RSS URL returns 404?
-- Should World Bank use a paid/scraping API or Playwright for JS-rendered CSOD listings?
-- Confirm 0–10 scoring scale matches the min-score slider default of 4.0 (previous version used 0–100)
-- Should Bond use an alternate URL (bond.org.uk/jobs returns 404; jobs.bond.org.uk has DNS issues in testing)?
+- Should ILO use Playwright given `job-search-results` is JS-rendered?
+- Is ReliefWeb HTML fallback acceptable as default when appname is not approved?
+- Should World Bank CSOD be added to manual-open list with a different URL?
+- Confirm cloud-IP warning sources list is complete for the user's deployment environment

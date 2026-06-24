@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -134,8 +135,26 @@ def location_tokens(location_filter: str) -> list[str]:
     return [t.strip().lower() for t in location_filter.split(",") if t.strip()]
 
 
+LOCATION_ALIASES: dict[str, list[str]] = {
+    "geneva": ["genève", "geneve", "switzerland", "ch"],
+    "netherlands": ["amsterdam", "utrecht", "the hague", "den haag", "nl", "holland"],
+    "remote": ["home-based", "home based", "telecommute", "virtual", "work from home", "wfh"],
+}
+
+
+def expand_location_tokens(tokens: list[str]) -> list[str]:
+    expanded: set[str] = set()
+    for token in tokens:
+        expanded.add(token)
+        for key, aliases in LOCATION_ALIASES.items():
+            if token == key or token in aliases:
+                expanded.add(key)
+                expanded.update(aliases)
+    return list(expanded)
+
+
 def matches_location(job: dict[str, Any], location_filter: str) -> bool:
-    tokens = location_tokens(location_filter)
+    tokens = expand_location_tokens(location_tokens(location_filter))
     if not tokens:
         return True
     haystack = " ".join(job.get(k, "") for k in ("title", "location", "description")).lower()
@@ -173,34 +192,34 @@ def clean_html_text(html: str) -> str:
     return BeautifulSoup(html, "lxml").get_text(" ", strip=True)
 
 
-# ── GROUP A fetchers ─────────────────────────────────────────────────────────
+# Sources that often block cloud/datacenter IPs — show manual URL when 0 jobs
+CLOUD_IP_MANUAL_URLS: dict[str, str] = {
+    "World Bank Jobs": "https://jobs.worldbank.org/en/jobs",
+    "Bond": "https://jobs.bond.org.uk/",
+    "Oxfam Jobs": "https://jobs.oxfam.org/vacancy/search/",
+    "GIZ Jobs": "https://www.giz.de/en/jobs/index_en_jobs.html",
+    "Fair Wear Foundation": "https://www.fairwear.org/about-us/vacancies/",
+    "IDH Sustainable Trade": "https://www.idhsustainabletrade.com/jobs/",
+}
 
 
 def fetch_reliefweb(query: str, _location: str) -> FetchResult:
-    """POST ReliefWeb API (v1 per spec, auto-upgrade to v2) with HTML fallback."""
+    """POST ReliefWeb v2 API with HTML fallback when API access fails."""
     payload: dict[str, Any] = {
         "query": {"value": query, "operator": "AND"} if query.strip() else {"value": ""},
         "limit": 50,
         "fields": {"include": ["title", "url", "source", "date", "body", "country"]},
     }
     appname = os.environ.get("RELIEFWEB_APPNAME", "job-dashboard")
+    api_url = f"https://api.reliefweb.int/v2/jobs?appname={quote_plus(appname)}"
 
-    for version in ("v1", "v2"):
-        api_url = f"https://api.reliefweb.int/{version}/jobs"
-        if version == "v2":
-            api_url += f"?appname={quote_plus(appname)}"
-        try:
-            resp = requests.post(
-                api_url,
-                json={**payload, "appname": appname} if version == "v1" else payload,
-                headers={**HEADERS, "Content-Type": "application/json"},
-                timeout=TIMEOUT,
-            )
-        except requests.RequestException as exc:
-            continue
-
-        if resp.status_code == 410 and version == "v1":
-            continue
+    try:
+        resp = requests.post(
+            api_url,
+            json=payload,
+            headers={**HEADERS, "Content-Type": "application/json"},
+            timeout=TIMEOUT,
+        )
         if resp.status_code == 200:
             data = resp.json()
             jobs = []
@@ -235,9 +254,13 @@ def fetch_reliefweb(query: str, _location: str) -> FetchResult:
                 )
             if jobs:
                 return jobs, None
-            return [], f"API returned 0 results for query '{query or 'all'}'"
+            return [], f"v2 API returned 0 results for query '{query or 'all'}'"
+    except requests.RequestException as exc:
+        pass  # fall through to HTML scrape
+    else:
+        if resp.status_code != 200:
+            pass  # fall through to HTML scrape
 
-    # HTML fallback
     try:
         url = "https://reliefweb.int/jobs"
         if query.strip():
@@ -269,9 +292,10 @@ def fetch_reliefweb(query: str, _location: str) -> FetchResult:
 
 def fetch_linkedin(query: str, location: str) -> FetchResult:
     loc = location.split(",")[0].strip() or "Netherlands"
+    max_results = 25
     guest_url = (
         "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
-        f"?keywords={quote_plus(query)}&location={quote_plus(loc)}&start=0&count=25"
+        f"?keywords={quote_plus(query)}&location={quote_plus(loc)}&start=0&count={max_results}"
     )
 
     def parse_linkedin_html(html: str) -> list[dict[str, Any]]:
@@ -296,17 +320,21 @@ def fetch_linkedin(query: str, location: str) -> FetchResult:
                     location=loc_el.get_text(strip=True) if loc_el else "",
                 )
             )
+            if len(jobs) >= max_results:
+                break
         return [j for j in jobs if j["title"] and j["url"]]
 
     try:
         resp = get_html(guest_url)
         jobs = parse_linkedin_html(resp.text)
         if jobs:
-            return jobs, None
+            return jobs[:max_results], None
     except requests.RequestException as exc:
         first_error = str(exc)
     else:
         first_error = f"guest API returned 0 cards (HTTP {resp.status_code})"
+
+    time.sleep(2)
 
     fallback_url = (
         "https://www.linkedin.com/jobs/search/"
@@ -314,7 +342,7 @@ def fetch_linkedin(query: str, location: str) -> FetchResult:
     )
     try:
         resp = get_html(fallback_url)
-        jobs = parse_linkedin_html(resp.text)
+        jobs = parse_linkedin_html(resp.text)[:max_results]
         if jobs:
             return jobs, None
         return [], f"{first_error}; fallback page also returned 0 jobs"
@@ -379,37 +407,51 @@ def fetch_un_jobs(query: str, location: str) -> FetchResult:
 
 
 def fetch_ilo(query: str, location: str) -> FetchResult:
-    jobs, err = fetch_rss_urls(
-        "ILO Jobs",
-        ["https://jobs.ilo.org/rss/vacancies.rss"],
-        query,
-        location,
-    )
-    if jobs:
-        return jobs, None
-
-    errors = [err] if err else []
+    url = f"https://jobs.ilo.org/job-search-results/?keyword={quote_plus(query)}"
     try:
-        url = "https://jobs.ilo.org/jobsearch/"
-        if query.strip():
-            url += f"?q={quote_plus(query)}"
         resp = get_html(url)
+        if resp.status_code >= 400:
+            return [], f"HTTP {resp.status_code}"
         soup = BeautifulSoup(resp.text, "lxml")
-        scraped = []
+        jobs = []
         for link in soup.select("a[href]"):
+            href = link.get("href", "")
             title = link.get_text(strip=True)
-            href = urljoin("https://jobs.ilo.org", link.get("href", ""))
-            if len(title) > 12 and any(x in href.lower() for x in ("job", "requisition", "vacanc")):
-                scraped.append(
-                    normalize_job(title=title, url=href, source="ILO Jobs", organization="ILO")
+            if len(title) < 8:
+                continue
+            if any(
+                token in href.lower()
+                for token in ("job", "requisition", "vacanc", "opening", "posting")
+            ):
+                jobs.append(
+                    normalize_job(
+                        title=title,
+                        url=urljoin("https://jobs.ilo.org", href),
+                        source="ILO Jobs",
+                        organization="ILO",
+                    )
                 )
-        scraped = filter_jobs(dedupe_jobs(scraped), query, location)
-        if scraped:
-            return scraped, None
-        errors.append("jobsearch page has no static listings (likely JavaScript-rendered)")
+        for row in soup.select("tr, li, article, [class*='job'], [class*='result']"):
+            link = row.select_one("a[href]")
+            if not link:
+                continue
+            title_el = row.select_one("h2, h3, h4, .job-title, [class*='title']")
+            title = title_el.get_text(strip=True) if title_el else link.get_text(strip=True)
+            if len(title) < 8:
+                continue
+            jobs.append(
+                normalize_job(
+                    title=title,
+                    url=urljoin("https://jobs.ilo.org", link["href"]),
+                    source="ILO Jobs",
+                    organization="ILO",
+                    location=row.get_text(" ", strip=True)[:120],
+                )
+            )
+        jobs = filter_jobs(dedupe_jobs(jobs), query, location)
+        return jobs, None
     except requests.RequestException as exc:
-        errors.append(f"web fallback: {exc}")
-    return [], "; ".join(e for e in errors if e)
+        return [], str(exc)
 
 
 def fetch_devnetjobs(query: str, location: str) -> FetchResult:
@@ -1152,7 +1194,12 @@ def run_scan(query: str, location: str, profile: str, do_score: bool) -> None:
         except Exception as exc:
             jobs, error = [], str(exc)
 
-        if error:
+        if name in CLOUD_IP_MANUAL_URLS and not jobs:
+            manual_url = CLOUD_IP_MANUAL_URLS[name]
+            scan_log[-1] = (
+                f"⚠️ {name}: 0 jobs — site may block cloud IPs. Open manually: {manual_url}"
+            )
+        elif error:
             scan_log[-1] = f"❌ {name}: failed ({error})"
         else:
             scan_log[-1] = f"✅ {name}: {len(jobs)} jobs"
