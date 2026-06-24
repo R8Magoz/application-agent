@@ -924,6 +924,115 @@ ALL_SOURCES: dict[str, SourceConfig] = {**GROUP_A, **GROUP_B, **GROUP_C}
 
 # ── Scoring ──────────────────────────────────────────────────────────────────
 
+SCORE_BANDS = [
+    {
+        "emoji": "🔴",
+        "range": "0–2",
+        "short": "Poor match",
+        "hint": "do not apply",
+        "word": "POOR",
+        "min": 0.0,
+        "max": 2.99,
+        "bg": "#c0392b",
+    },
+    {
+        "emoji": "🟠",
+        "range": "3–4",
+        "short": "Weak match",
+        "hint": "significant gaps",
+        "word": "WEAK",
+        "min": 3.0,
+        "max": 4.99,
+        "bg": "#e67e22",
+    },
+    {
+        "emoji": "🟡",
+        "range": "5–6",
+        "short": "Partial match",
+        "hint": "read carefully",
+        "word": "PARTIAL",
+        "min": 5.0,
+        "max": 6.99,
+        "bg": "#f1c40f",
+        "text": "#1a1a1a",
+    },
+    {
+        "emoji": "🟢",
+        "range": "7–8",
+        "short": "Strong match",
+        "hint": "worth applying",
+        "word": "STRONG",
+        "min": 7.0,
+        "max": 8.99,
+        "bg": "#27ae60",
+    },
+    {
+        "emoji": "⭐",
+        "range": "9–10",
+        "short": "Perfect match",
+        "hint": "apply immediately",
+        "word": "PERFECT",
+        "min": 9.0,
+        "max": 10.0,
+        "bg": "#6c3483",
+    },
+]
+
+SCORING_RUBRIC = """Score each job 0–10 using this rubric:
+  10 = candidate meets every requirement, ideal seniority, preferred location, domain is an exact match
+  7–9 = strong match, minor gaps only
+  5–6 = relevant background but missing 1–2 key requirements
+  3–4 = adjacent field, transferable but not direct
+  0–2 = different sector or seniority mismatch
+
+Be strict. Reserve 9–10 only for roles that read like they were written for this candidate's exact profile.
+
+Score bands for display:
+  9–10 = PERFECT — apply immediately
+  7–8  = STRONG — worth applying
+  5–6  = PARTIAL — read carefully before applying
+  3–4  = WEAK — significant gaps
+  0–2  = POOR — do not apply"""
+
+
+def get_score_band(score: float) -> dict[str, Any]:
+    for band in SCORE_BANDS:
+        if band["min"] <= score <= band["max"]:
+            return band
+    return SCORE_BANDS[0]
+
+
+def render_score_legend() -> None:
+    st.markdown("**Match score key (0–10)**")
+    cells = []
+    for band in SCORE_BANDS:
+        text_color = band.get("text", "white")
+        cells.append(
+            f'<div style="flex:1;background:{band["bg"]};color:{text_color};padding:10px 6px;'
+            f'text-align:center;font-size:0.85rem;line-height:1.35">'
+            f'<strong>{band["emoji"]} {band["range"]}</strong><br>'
+            f'{band["short"]}<br>'
+            f'<span style="opacity:0.9;font-size:0.75rem">{band["hint"]}</span></div>'
+        )
+    html = (
+        '<div style="display:flex;gap:2px;border-radius:8px;overflow:hidden;margin:4px 0 14px 0">'
+        + "".join(cells)
+        + "</div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def format_score_badge_html(score: float | None) -> str:
+    if score is None or not isinstance(score, (int, float)):
+        return '<span style="opacity:0.7">⬜ not scored</span>'
+    band = get_score_band(float(score))
+    text_color = band.get("text", "white")
+    return (
+        f'<span style="background:{band["bg"]};color:{text_color};padding:4px 12px;'
+        f'border-radius:6px;font-weight:700;font-size:0.95rem;white-space:nowrap">'
+        f'{band["emoji"]} {float(score):.1f} {band["word"]}</span>'
+    )
+
 
 def get_anthropic_client() -> Any | None:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -939,10 +1048,10 @@ def get_anthropic_client() -> Any | None:
 
 def build_scoring_prompt(jobs: list[dict[str, Any]], profile: str) -> str:
     lines = [
-        "Score each job 0-10 for fit with this candidate profile (10 = perfect fit).",
+        SCORING_RUBRIC,
         'Return ONLY valid JSON: [{"index": 0, "score": 7.5, "reason": "short reason"}, ...]',
-        f"Profile:\n{profile}",
-        "Jobs:",
+        f"Candidate profile:\n{profile}",
+        "Jobs to score:",
     ]
     for idx, job in enumerate(jobs):
         lines.append(
@@ -1079,8 +1188,13 @@ def run_scan(query: str, location: str, profile: str, do_score: bool) -> None:
 
 def render_job_card(job: dict[str, Any], prefix: str = "") -> None:
     score = job.get("score")
-    score_label = "not scored" if score is None else f"{score:.1f}/10" if isinstance(score, (int, float)) else str(score)
-    st.markdown(f"**{job['title']}** — {score_label}")
+    badge = format_score_badge_html(score if isinstance(score, (int, float)) else None)
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">'
+        f'<span style="font-size:1.1rem;font-weight:600">{job["title"]}</span>'
+        f"{badge}</div>",
+        unsafe_allow_html=True,
+    )
     st.caption(
         f"{job.get('organization') or '—'} · {job.get('location') or '—'} · {job.get('source', '')}"
     )
@@ -1144,6 +1258,7 @@ def render_sidebar() -> tuple[str, str, float, str]:
 
 
 def render_scan_tab(profile: str, query: str, location: str, min_score: float, do_score: bool) -> None:
+    render_score_legend()
     st.subheader("Scan for jobs")
     if st.button("Start scan", type="primary"):
         run_scan(query, location, profile, do_score)
