@@ -43,9 +43,10 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 TIMEOUT = 15
 
 KEYWORD_PRESETS = {
-    "Living Wages & Decent Work": "living wage decent work labour standards supply chain",
-    "International Development": "programme officer international development sustainability",
-    "UN & Multilateral": "programme officer UN ILO UNDP WHO Geneva",
+    "P-3 UN Target": "programme officer P-3 decent work living wage labour standards ILO UNDP Geneva",
+    "Living Wages & Supply Chains": "living wage living income supply chain sustainability programme officer",
+    "Decent Work & Labour Standards": "decent work labour standards human rights due diligence programme manager ILO",
+    "JPO / Entry UN": "junior professional officer JPO associate programme officer P-2 P-3 UN multilateral",
 }
 
 STATUS_OPTIONS = ["Saved", "Applied", "Interview", "Offer", "Rejected", "Withdrawn"]
@@ -138,6 +139,7 @@ def location_tokens(location_filter: str) -> list[str]:
 LOCATION_ALIASES: dict[str, list[str]] = {
     "geneva": ["genève", "geneve", "switzerland", "ch"],
     "netherlands": ["amsterdam", "utrecht", "the hague", "den haag", "nl", "holland"],
+    "spain": ["madrid", "barcelona", "valencia", "es", "españa", "espana"],
     "remote": ["home-based", "home based", "telecommute", "virtual", "work from home", "wfh"],
 }
 
@@ -1020,21 +1022,35 @@ SCORE_BANDS = [
     },
 ]
 
-SCORING_RUBRIC = """Score each job 0–10 using this rubric:
-  10 = candidate meets every requirement, ideal seniority, preferred location, domain is an exact match
-  7–9 = strong match, minor gaps only
-  5–6 = relevant background but missing 1–2 key requirements
-  3–4 = adjacent field, transferable but not direct
-  0–2 = different sector or seniority mismatch
+SCORING_RUBRIC = """Score each job 0–10 for this specific candidate.
 
-Be strict. Reserve 9–10 only for roles that read like they were written for this candidate's exact profile.
+TARGET ROLE:
+  P-3 or equivalent at UN/multilateral/INGO, European duty station (Geneva, Netherlands, Spain) or remote.
 
-Score bands for display:
-  9–10 = PERFECT — apply immediately
-  7–8  = STRONG — worth applying
-  5–6  = PARTIAL — read carefully before applying
-  3–4  = WEAK — significant gaps
-  0–2  = POOR — do not apply"""
+DOMAIN (core fit):
+  Living wages, decent work, labour standards, supply chain sustainability, human rights due diligence.
+
+NON-NEGOTIABLES — score 0 if ANY fail:
+  1. Seniority must be P-3+ or equivalent (Programme Officer, Programme Manager, Specialist — not intern, assistant, or P-1/P-2 unless JPO pathway).
+  2. Employer must be UN, multilateral, or major INGO (ILO, UNDP, OHCHR, UN Global Compact, WHO, UNICEF, etc.).
+  3. Location must be Geneva, Netherlands, Spain, or remote/home-based.
+
+STRONG POSITIVE SIGNALS (boost score when present):
+  ILO, UNDP, OHCHR, UN Global Compact, Geneva, decent work, living wage, living income, supply chain,
+  labour standards, human rights due diligence, UNGPs, OECD due diligence, Better Work.
+
+CANDIDATE STRENGTHS TO MATCH AGAINST:
+  IDH Salary Matrix, ILO Better Work, UNGC Forward Faster, OHCHR internship, Power BI, MEAL, PM4NGOs,
+  multi-stakeholder convening, wage-gap methodology, supply chain programme design.
+
+SCORING SCALE (after non-negotiables pass):
+  9–10 = PERFECT — P-3+ UN/multilateral role in target domain and location; reads like written for this candidate
+  7–8  = STRONG — clear domain match, right seniority and org type; minor gaps only
+  5–6  = PARTIAL — relevant sector/org but missing 1–2 key requirements (e.g. adjacent duty station or broader development role)
+  3–4  = WEAK — adjacent field, transferable but not direct fit
+  0–2  = POOR — wrong sector, seniority, org type, or location (or failed a non-negotiable → use 0)
+
+Be strict. Reserve 9–10 only for roles that closely match living wages/decent work/supply chain at P-3+ in the target locations."""
 
 
 def get_score_band(score: float) -> dict[str, Any]:
@@ -1079,8 +1095,8 @@ def format_score_badge_html(score: float | None) -> str:
 def get_anthropic_client() -> Any | None:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     try:
-        if "anthropic_api_key" in st.secrets:
-            api_key = st.secrets["anthropic_api_key"]
+        if "ANTHROPIC_API_KEY" in st.secrets:
+            api_key = st.secrets["ANTHROPIC_API_KEY"]
     except Exception:
         pass
     if not api_key or anthropic is None:
@@ -1158,7 +1174,7 @@ def init_session_state() -> None:
         "unscored_jobs": [],
         "scan_log": [],
         "search_query": "",
-        "location_filter": "Netherlands, Geneva, Remote",
+        "location_filter": "Geneva, Netherlands, Spain, Remote",
         "source_settings": load_json(SETTINGS_FILE, {}),
         "saved_jobs": load_json(SAVED_JOBS_FILE, []),
         "application_status": load_json(STATUS_FILE, {}),
@@ -1223,6 +1239,11 @@ def run_scan(query: str, location: str, profile: str, do_score: bool) -> None:
     if do_score and all_jobs:
         all_jobs = score_jobs(all_jobs, profile)
         unscored = [j for j in all_jobs if j.get("score") is None]
+
+    all_jobs.sort(
+        key=lambda j: j.get("score") if isinstance(j.get("score"), (int, float)) else -1,
+        reverse=True,
+    )
 
     st.session_state.jobs = all_jobs
     st.session_state.unscored_jobs = unscored
@@ -1290,11 +1311,11 @@ def render_sidebar() -> tuple[str, str, float, str]:
 
     location = st.sidebar.text_input(
         "Location filter",
-        value=st.session_state.get("location_filter", "Netherlands, Geneva, Remote"),
+        value=st.session_state.get("location_filter", "Geneva, Netherlands, Spain, Remote"),
     )
     st.session_state.location_filter = location
 
-    min_score = st.sidebar.slider("Min score", 0.0, 10.0, 4.0, 0.5)
+    min_score = st.sidebar.slider("Min score", 0.0, 10.0, 6.0, 0.5)
     do_score = st.sidebar.checkbox("Score with Claude", value=True)
 
     st.sidebar.markdown("---")
