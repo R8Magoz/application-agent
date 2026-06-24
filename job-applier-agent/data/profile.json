@@ -1,21 +1,205 @@
 {
   "personal": {
-    "name": "Your Full Name",
-    "email": "your.email@example.com",
-    "location": "Netherlands / Geneva"
+    "name": "Marc Gené Nogales",
+    "email": "r8magoz@gmail.com",
+    "phone": "+31 687326561",
+    "location": "Amsterdam, Netherlands"
   },
-  "headline": "International Development Professional | Living Wages & Decent Work",
-  "summary": "Programme and policy professional focused on living wages, labour standards, supply chain sustainability, and decent work in international development and multilateral organisations.",
+  "links": {
+    "website": "https://thedevelopmentcurve.com",
+    "linkedin": "https://www.linkedin.com/in/marcgenenogales",
+    "github": null
+  },
+  "education": {
+    "school": "University of Amsterdam",
+    "degree": "MSc International Development Studies (Well-being Economics)",
+    "gpa": null,
+    "graduation": "2023",
+    "honors": null
+  },
+  "headline": "Living Wage & Decent Work Specialist | Supply Chain Sustainability | International Development",
+  "summary": "Program Officer and subject-matter lead on living wages and living income at IDH Solutions, working with global partners including Unilever, Ingka (IKEA), the UN Global Compact, and ILO Better Work to translate social commitments into measurable action across supply chains. Background spans operational management, humanitarian data systems at War Child Holland, and a human rights internship at OHCHR Geneva. Combines technical depth in wage-gap methodology with multi-stakeholder convening at C-suite and intergovernmental level.",
   "top_skills": [
-    "Programme management",
-    "Labour standards",
-    "Supply chain sustainability",
-    "Stakeholder engagement",
-    "Monitoring and evaluation"
+    "Living Wage & Living Income methodology",
+    "Multi-stakeholder convening and negotiation",
+    "Human Rights Due Diligence (UNGPs, OECD Guidelines)",
+    "Supply chain sustainability programme design",
+    "Stakeholder management at C-suite and institutional level",
+    "MEAL frameworks and programme quality assurance",
+    "Power BI and quantitative/qualitative analysis",
+    "Project and programme management (PM4NGOs)"
   ],
+  "all_skills": {
+    "technical": [
+      "Power BI",
+      "Salesforce",
+      "SharePoint",
+      "IATI reporting",
+      "Quantitative analysis",
+      "Qualitative analysis",
+      "Wage-gap verification",
+      "Data quality assurance"
+    ],
+    "frameworks": [
+      "UN Guiding Principles on Business and Human Rights (UNGPs)",
+      "OECD Due Diligence Guidelines",
+      "ILO Decent Work framework",
+      "ILO Better Work",
+      "Minimum Standards of Humanitarian Assistance",
+      "MEAL (Monitoring, Evaluation, Accountability and Learning)",
+      "PM4NGOs project management"
+    ],
+    "languages": [
+      "Spanish (Native)",
+      "Catalan (Native)",
+      "English (C2)",
+      "Italian (B1)",
+      "French (A2)"
+    ],
+    "domains": [
+      "Living wages and living income",
+      "Decent work and labour standards",
+      "Supply chain sustainability",
+      "Human rights in supply chains",
+      "International development",
+      "Humanitarian programme quality",
+      "Development economics and policy analysis",
+      "Multi-stakeholder initiative design",
+      "Corporate sustainability advisory"
+    ]
+  },
+  "flagship_project": {
+    "name": "UN Global Compact Forward Faster – Living Wages Flagship Training",
+    "description": "Coordinated and delivered IDH's flagship living wages training under the UN Global Compact Forward Faster initiative, convening a cohort of global companies and international experts to build institutional capacity on wage-gap measurement and credible action. Served as principal IDH liaison and content lead, designing training architecture and ensuring alignment with UN Global Compact standards and ILO Better Work methodologies.",
+    "tech_stack": [
+      "Salary Matrix (wage-gap verification tool)",
+      "Power BI",
+      "Living Wage Assessment Methodology"
+    ],
+    "metrics": {
+      "initiative_scope": "Global – UN Global Compact member companies",
+      "partner_organisations": "UN Global Compact, ILO Better Work, Unilever, Ingka (IKEA)"
+    },
+    "url": "https://thedevelopmentcurve.com"
+  },
+  "experience": [
+    {
+      "title": "Program Officer, Living Wages & Living Income",
+      "company": "IDH Solutions (The Sustainable Trade Initiative)",
+      "location": "Utrecht, Netherlands",
+      "dates": "Sep 2025 – Present",
+      "bullets": [
+        "Serve as IDH's subject-matter lead on living wages and principal external liaison for the Salary Matrix, the sector-leading wage-gap verification tool used by global companies.",
+        "Own end-to-end delivery on commercial engagements with Unilever, Ingka (IKEA), the Banana Commitment, and the UN Global Compact Forward Faster initiative.",
+        "Designed and implemented IDH's Living Wage Assessment Methodology and gap-assessment reporting framework, now the institutional standard across the IDH Solutions portfolio.",
+        "Designed and rolled out Remote Data Quality Checks, strengthening verification integrity and stakeholder trust in wage data across multiple sectors and geographies.",
+        "Represent IDH at industry events and deliver field engagement in Colombia, Delhi, and London alongside senior staff."
+      ]
+    },
+    {
+      "title": "Program Officer, Living Wages & Living Income",
+      "company": "IDH (The Sustainable Trade Initiative)",
+      "location": "Utrecht, Netherlands",
+      "dates": "Nov 2024 – Sep 2025",
+      "bullets": [
+        "Promoted directly from internship into Program Officer on the Living Wage & Living Income team.",
+        "Supported and led parts of IDH's Banana Commitment on Living Wages, aligning major European retailers and banana producers on voluntary wage improvements.",
+        "Contributed to internal workstreams optimising the Salary Matrix; methodological improvements adopted by the growing network of private-sector users.",
+        "Contributed to the foundational design of IDH Solutions ahead of its formal launch."
+      ]
+    },
+    {
+      "title": "Sector Initiatives Intern – Banana Commitment",
+      "company": "IDH (The Sustainable Trade Initiative)",
+      "location": "Utrecht, Netherlands",
+      "dates": "Jun 2024 – Nov 2024",
+      "bullets": [
+        "Built and managed Power BI dashboards translating complex wage data into decision-ready insights for senior staff and external partners.",
+        "Led desk research on the ILO Better Work agenda, shaping programmatic thinking in the banana sector; performance led to direct conversion into Program Officer role."
+      ]
+    },
+    {
+      "title": "Programme Quality Volunteer",
+      "company": "War Child Holland",
+      "location": "Amsterdam, Netherlands",
+      "dates": "Jan 2024 – Jun 2024",
+      "bullets": [
+        "Contributed to War Child's MEAL function, supporting systems used to assess programme effectiveness and impact.",
+        "Worked on implementation and continuous improvement of the Minimum Standards of Humanitarian Assistance."
+      ]
+    },
+    {
+      "title": "Quality Assurance Volunteer",
+      "company": "War Child Holland",
+      "location": "Amsterdam, Netherlands",
+      "dates": "Jun 2023 – Jan 2024",
+      "bullets": [
+        "Owned data quality assurance across Salesforce and SharePoint, partnering with country teams on grant and project records.",
+        "Supported IATI reporting and delivered analysis on fundraising pipeline and income projections for senior staff."
+      ]
+    },
+    {
+      "title": "Human Rights Intern – Human Rights Council and Treaty Mechanisms Division",
+      "company": "United Nations Human Rights (OHCHR)",
+      "location": "Geneva, Switzerland",
+      "dates": "Jan 2023 – May 2023",
+      "bullets": [
+        "Supported facilitation of high-level meetings involving diplomats, UN mandate holders, and state representatives across multiple Human Rights Council sessions.",
+        "Selected to coordinate the intern cohort – the only management responsibility extended at intern level.",
+        "Led operational redesign of the post-session report release process, compressing turnaround from bi-daily to same-day cycle."
+      ]
+    },
+    {
+      "title": "Project Manager, Properties – Benelux",
+      "company": "Flink",
+      "location": "Amsterdam, Netherlands",
+      "dates": "Apr 2022 – Dec 2022",
+      "bullets": [
+        "Oversaw property operations across 76 locations in the Netherlands, Belgium, and Luxembourg with full responsibility for openings, transformations, and closures.",
+        "Senior operational point of contact for upper management on development strategy and systems design during rapid expansion."
+      ]
+    },
+    {
+      "title": "Head of Sector – Renovations",
+      "company": "Leroy Merlin (Talented Youth Fast Track Program)",
+      "location": "Barcelona Area, Spain",
+      "dates": "Oct 2020 – Aug 2021",
+      "bullets": [
+        "Managed a team of 17 across four departments; delivered 44% sector growth against a regional average of -15% during COVID.",
+        "Converted long-running temporary contracts into permanent ones and promoted 2 staff internally.",
+        "Appointed Head of Circular Products mid-tenure; cut losses on end-of-life inventory by 29%."
+      ]
+    },
+    {
+      "title": "General Manager",
+      "company": "Salting Centres",
+      "location": "Sabadell, Spain",
+      "dates": "Nov 2018 – Mar 2020",
+      "bullets": [
+        "Held full P&L accountability; scaled the team from 15 to 32 (+113%) and grew revenue and bookings by 120%.",
+        "Built the talent pipeline that produced 2 future General Managers for other Salting locations."
+      ]
+    }
+  ],
+  "work_authorization": {
+    "authorized": true,
+    "requires_sponsorship": false,
+    "visa_status": "EU citizen (Spanish national), full right to work across EU/EEA"
+  },
   "preferences": {
-    "location_preference": ["Netherlands", "Geneva", "Remote"],
-    "job_types": ["Full-time", "Consultancy"],
-    "sectors": ["International development", "NGO", "UN", "Multilateral"]
-  }
+    "willing_to_relocate": true,
+    "location_preference": ["Switzerland", "Netherlands", "Spain"],
+    "job_types": ["Full-time"],
+    "salary_expectation": "Negotiable",
+    "start_date": "Flexible"
+  },
+  "application_defaults": {
+    "years_experience": "7+",
+    "education_level": "Master's degree",
+    "gender": "Prefer not to say",
+    "race_ethnicity": "Prefer not to say",
+    "veteran_status": "No",
+    "disability_status": "No"
+  },
+  "resume_file": "~/job-applier-agent/resume/Marc_Gene_Nogales_Resume.pdf"
 }
