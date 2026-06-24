@@ -1,0 +1,21 @@
+{
+  "personal": {
+    "name": "Your Full Name",
+    "email": "your.email@example.com",
+    "location": "Netherlands / Geneva"
+  },
+  "headline": "International Development Professional | Living Wages & Decent Work",
+  "summary": "Programme and policy professional focused on living wages, labour standards, supply chain sustainability, and decent work in international development and multilateral organisations.",
+  "top_skills": [
+    "Programme management",
+    "Labour standards",
+    "Supply chain sustainability",
+    "Stakeholder engagement",
+    "Monitoring and evaluation"
+  ],
+  "preferences": {
+    "location_preference": ["Netherlands", "Geneva", "Remote"],
+    "job_types": ["Full-time", "Consultancy"],
+    "sectors": ["International development", "NGO", "UN", "Multilateral"]
+  }
+}
